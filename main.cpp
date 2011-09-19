@@ -48,8 +48,10 @@ DigitalOut p_E_dir(E_DIR_PIN);
 DigitalOut p_E_step(E_STEP_PIN);
 
 DigitalOut p_heater0(HEATER_0_PIN);
+DigitalOut p_heater1(HEATER_1_PIN);//heated-build-platform
 
 AnalogIn p_temp0(TEMP_0_PIN);
+AnalogIn p_temp1(TEMP_1_PIN);//heated-build-platform thermistor
 
 
 Serial pc(USBTX, USBRX);
@@ -173,6 +175,11 @@ char *strchr_pointer; // just a pointer to find chars in the cmd string like X, 
 int target_raw = 0;
 int current_raw;
 
+//for heated-build-platform
+int target_raw1 = 0;
+int current_raw1;
+
+
 //Inactivity shutdown variables
 int previous_millis_cmd=0;
 int max_inactive_time = 0;
@@ -223,7 +230,7 @@ void check_z_min_endstop() {
 
 
 
-
+//manages heaters for hot-end and heated-build-platform
 void manage_heater() {
 
     if (TEMP_0_PIN != NC) {
@@ -251,7 +258,7 @@ void manage_heater() {
     
         if(current_raw == 65535)
         {
-           pc.printf("thermistor disconnected!!!\n");
+           pc.printf("thermistor0 disconnected!!!\n");
            p_heater0 = 0;
         }
         else
@@ -266,6 +273,51 @@ void manage_heater() {
         {
           p_heater0 = 0;
         }
+        }
+        
+    }
+	
+	//thermistor for heated-build-platform
+	if (TEMP_1_PIN != NC) {
+        current_raw1 = 0;
+        for(int i=0;i<3;i++)
+        {
+            int _raw1 = p_temp1.read_u16();
+            if((current_raw1 == 65535) && (_raw1==65535))
+            {
+				//do nothing
+            }
+            else if((current_raw1 == 65535) && (_raw1<65535))
+            {
+                current_raw1 = _raw1;
+            }
+            else
+            {
+                long l = current_raw1 + _raw1;
+                l = l/2;
+                current_raw1 = (int) l;
+            }
+        }
+        //pc.printf("currentRaw1: %d \t targetRaw1: %d\n", current_raw1, target_raw1);
+        
+		
+        if(current_raw1 == 65535)
+        {
+			pc.printf("thermistor1 disconnected!!!\n");
+			p_heater1 = 0;
+        }
+        else
+        {
+            
+			if((target_raw1 >0) && (current_raw1 > target_raw1))
+			{
+				p_heater1 = 1;
+				//pc.printf("currentRaw: %d \t targetRaw: %d\n", current_raw, target_raw);
+			}
+			else
+			{
+				p_heater1 = 0;
+			}
         }
         
     }
@@ -759,7 +811,7 @@ void process_commands() {
     if (code_seen('M')) {
 
         switch ( (int)code_value() ) {
-            case 104: // M104
+            case 104: // M104 - set hot-end temp
                 
                 if (code_seen('S'))
                 {
@@ -768,6 +820,15 @@ void process_commands() {
                     //pc.printf("target_raw: %d\n ", target_raw);
                 }
                 break;
+        case 140: // M140 - set heated-printbed temp
+                if (code_seen('S'))
+                {
+                     
+                    target_raw1 = temp2analog(code_value());
+                    //pc.printf("target_raw1: %d\n ", target_raw);
+                }
+                break;                
+                
             case 105: // M105
                 pc.printf("ok T:");
                 if (TEMP_0_PIN != NC) {
