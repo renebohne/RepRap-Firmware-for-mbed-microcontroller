@@ -1,0 +1,7 @@
+This is a firmware for a RepRap 3D printer.
+
+The original firmware was created by tonokip for the Arduino platform.
+This firmware was ported to the mbed microcontroller platform.
+It is running on my Prusa Mendel.
+
+More to follow...
