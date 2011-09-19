@@ -4,4 +4,9 @@ The original firmware was created by tonokip for the Arduino platform.
 This firmware was ported to the mbed microcontroller platform.
 It is running on my Prusa Mendel.
 
-More to follow...
+I use ReplicatorG to control the printer:
+<driver name="reprap5d"> ... 57600 baud
+
+You can use the .brd and .sch files in the Eagle_files subdirectory for a first PCB prototype. 
+It can connect the mbed board to the Sparkfun Quadstepper Motor Driver board (sku: ROB-10507)
+JP5 can connect a Sparkfun Thumb Joystick (sku: COM-09032)
